@@ -51,7 +51,8 @@ class Build:
         return res.returncode == 0
 
     def clean(self) -> None:
-        shutil.rmtree(self.path)
+        if os.path.exists(self.path):
+            shutil.rmtree(self.path)
 
 
 @attr.s
