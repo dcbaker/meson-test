@@ -28,6 +28,7 @@ import subprocess
 
 import appdirs
 import attr
+import colorama
 
 CONFIG_DIR = appdirs.AppDirs('meson_test', 'dcbaker')
 CONFIG = Dict[str, Dict[str, str]]
@@ -54,7 +55,6 @@ class Build:
         if os.path.exists(self.path):
             shutil.rmtree(self.path)
 
-
 @attr.s
 class Result:
 
@@ -62,8 +62,41 @@ class Result:
     configure: Optional[bool] = attr.ib(default=None)
     build: Optional[bool] = attr.ib(default=None)
 
+    @staticmethod
+    def __report_pass_or_fail(status: Optional[bool]) -> List[str]:
+        strlist = []
+        if status is None:
+            strlist.extend([colorama.Style.DIM, 'Skip'])
+        elif status:
+            strlist.extend([colorama.Fore.GREEN, 'Pass'])
+        else:
+            strlist.extend([colorama.Fore.RED, 'Fail'])
+        strlist.append(colorama.Fore.RESET)
+        return strlist
+
+    def report(self) -> List[str]:
+        final = [colorama.Style.BRIGHT, self.name, colorama.Style.RESET_ALL]
+        final.append('configure:')
+        final.extend(self.__report_pass_or_fail(self.configure))
+        final.append('build:')
+        final.extend(self.__report_pass_or_fail(self.build))
+        final.append(colorama.Style.RESET_ALL)
+        return final
+
+
+def format_results(results: List[Result]) -> List[str]:
+    reports = [r.report() for r in results]
+    length = max(len(s[1]) for s in reports)
+    for r in reports:
+        actual = len(r[1])
+        if actual < length:
+            r[1] = r[1] + ' ' * (length - actual)
+    return [' '.join(r) for r in reports]
+
 
 def main():
+    colorama.init()
+
     parser = argparse.ArgumentParser()
     parser.add_argument('project')
     parser.add_argument('--build-dir', action='store', default='build-test')
@@ -94,8 +127,9 @@ def main():
 
         result.build = build.build()
 
-    for r in results:
-        print(str(r))
+    print('\nResults:\n')
+    for r in format_results(results):
+        print(r)
 
 
 if __name__ == '__main__':
