@@ -99,7 +99,7 @@ def main():
 
     parser = argparse.ArgumentParser()
     parser.add_argument('project')
-    parser.add_argument('--build-dir', action='store', default='build-test')
+    parser.add_argument('--build-dir', action='store', default='.meson_test')
     parser.add_argument('--clean', action='store_true')
     parser.add_argument('--test', action='append', default=[])
     args = parser.parse_args()
